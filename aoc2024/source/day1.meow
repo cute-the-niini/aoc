@@ -1,0 +1,71 @@
+% meow/1
+
+namespace day1;
+
+use meow.core/ exposing transcript;
+use meow.text.regex exposing pattern;
+
+singleton solution;
+
+%region - Parsing --------------------------------------------------------------
+asset day1 = file "day1.txt";
+
+implement solution {
+  def self example =
+    """
+    3   4
+    4   3
+    2   5
+    1   3
+    3   9
+    3   3
+    """;
+  
+  def self input =
+    force day1 | read-utf8;
+
+  @spec (Self, text) -> #(array<int>, array<int>);
+  def self parse: Input::text {
+    lines(Input)
+      | map: words(_)
+      | map: { Pair in 
+                 let [L0, R0] = Pair as array in
+                 let L = #int parse: L0 | unwrap! in
+                 let R = #int parse: R0 | unwrap! in
+                 #(L, R)
+             }
+      | unzip;
+  } test {
+    assert solution parse: solution example
+      ==> #([3, 4, 2, 1, 3, 3],
+            [4, 3, 5, 3, 9, 3]);
+  }
+}
+%endregion
+
+%region - Part 1 ---------------------------------------------------------------
+implement solution {
+  @spec (Self, #(array<int>, array<int>)) -> T when T is &iterable<int>;
+  def self pairwise-distances: Lists {
+    let #(L, R) = Lists in
+    L sort iterator zip: R sort with: { A, B in (A - B) absolute };
+  } test {
+    assert solution pairwise-distances: (solution parse: solution example) | as array
+      ==> [2, 1, 0, 1, 2, 5];
+  }
+
+  @spec (Self, text) -> int;
+  def self part1: Input {
+    self parse: Input
+      |> self pairwise-distances: _
+      |> _ iterator
+      |> _ sum-of: #int;
+  } test {
+    assert solution part1: solution example ==> 11;
+  }
+
+  @spec (Self) -> int;
+  def self part1 =
+    self part1: self input;
+}
+%endregion

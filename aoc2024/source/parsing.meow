@@ -1,0 +1,38 @@
+% meow/1
+// This file just provides common parsing utilities for other files.
+
+use meow.text.regex/ exposing pattern;
+
+/// Break text at line boundaries.
+@spec (text) -> T when T is &iterable<text>;
+def lines(Text) {
+  #pattern from: "\\r\\n|\\r|\\n"
+    | compile
+    | split: Text
+    | iterator
+    | map: _ trim
+    | take-if: (_ =/= "");
+}
+
+test "lines" {
+  assert lines("a\nb c d e\r\nf") as array ==> ["a", "b c d e", "f"];
+  assert lines("") as array ==> [];
+  assert lines("   ") as array ==> [];
+}
+
+/// Break text at white-space boundaries
+@spec (text) -> T when T is &iterable<text>;
+def words(Text) {
+  #pattern from: " "
+    | compile
+    | split: Text
+    | iterator
+    | map: _ trim
+    | take-if: (_ =/= "");
+}
+
+test "words" {
+  assert words("a b c    def  g") as array ==> ["a", "b", "c", "def", "g"];
+  assert words("   ") as array ==> [];
+  assert words("") as array ==> [];
+}

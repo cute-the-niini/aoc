@@ -1,0 +1,3 @@
+.target/
+.bin/
+aoc*/assets/*.txt

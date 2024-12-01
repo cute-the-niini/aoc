@@ -1,0 +1,9 @@
+% meow/1
+
+use meow.core/ exposing transcript;
+
+def main(Args) {
+  match Args first! {
+    case "1" => day1.solution run;
+  }
+}

@@ -1,0 +1,8 @@
+% meow.pkg/1
+
+package aoc2024 @ 0.0.0 {
+  depends meow.core;
+  depends meow.text.regex;
+
+  main 'main;
+}
