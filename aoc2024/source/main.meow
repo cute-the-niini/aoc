@@ -3,7 +3,8 @@
 use meow.core/ exposing transcript;
 
 def main(Args) {
-  match Args first! {
-    case "1" => day1.solution run;
+  match Args {
+    case ["1", "1"] => transcript write: day1.solution part1 as text;
+    case ["1", "2"] => transcript write: day1.solution part2 as text;
   }
 }
