@@ -69,3 +69,31 @@ implement solution {
     self part1: self input;
 }
 %endregion
+
+%region - Part 2 ---------------------------------------------------------------
+implement solution {
+  @spec (Self, #(array<int>, array<int>)) -> T when T is &iterable<int>;
+  def self similarity-scores: Lists {
+    let #(L, R) = Lists in
+    let Frequencies = R iterator frequencies in
+    L iterator
+      | map: { X in X * (Frequencies at: X or-default: 0) }
+  } test {
+    assert solution similarity-scores: (solution parse: solution example) | as array
+      ==> [9, 4, 0, 0, 9, 9];
+  }
+
+  @spec (Self, text) -> int;
+  def self part2: Input {
+    self parse: Input
+      |> self similarity-scores: _
+      |> _ sum-of: #int;
+  } test {
+    assert solution part2: solution example ==> 31;
+  }
+
+  @spec (Self) -> int;
+  def self part2 =
+    self part2: self input;
+}
+%endregion
