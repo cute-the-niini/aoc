@@ -10,6 +10,20 @@ singleton solution;
 %region - Parsing --------------------------------------------------------------
 asset day1 = file "day1.txt";
 
+// The input for this problem is quite neatly formatted as space-separated
+// columns. Meow doesn't have a built-in CSV (or TSV/etc) parser currently,
+// but since we don't have to worry about text within a column here the
+// barebones "split at line breaks to get all rows, then split at spaces
+// to get the columns of a row" works.
+//
+// Because the puzzle mostly wants you to treat each column independently
+// of their rows, `iterator unzip` does the job of taking an 
+// `iterable<#(X, Y)>` to an `#(iterable<X>, iterable<Y>)`.
+//
+// The current implementation in meow.core consumes the entire iterable
+// before returning the tuple of each column, which is not ideal, but isn't
+// a problem in this puzzle.
+//
 implement solution {
   def self example =
     """
@@ -44,6 +58,20 @@ implement solution {
 %endregion
 
 %region - Part 1 ---------------------------------------------------------------
+// Part 1 wants you to pair each number in the columns by their natural integer
+// ordering and then compute the absolute difference between them. There might
+// be an online way of doing this, but since the lists are the same length and
+// they're both integers, sorting the two lists first and then doing a
+// pairwise composition to get their difference is a lot simpler and
+// efficient enough. These lists aren't *that* long (my puzzle input is
+// only 1000 lines).
+//
+// You might find it a bit awkward that meow.core only defines
+// `_ zip: _ with: _` on iterators rather than any iterable, so you
+// always need to convert a list to a list iterator first, but I think
+// it makes it clearer that what you get out of the operation is an iterator,
+// regardless of what the inputs to it were.
+//
 implement solution {
   @spec (Self, #(array<int>, array<int>)) -> T when T is &iterable<int>;
   def self pairwise-distances: Lists {
@@ -71,6 +99,28 @@ implement solution {
 %endregion
 
 %region - Part 2 ---------------------------------------------------------------
+// Part two wants you to count numbers on the first column by how often they
+// appear in the right column. That's just a frequency lookup. When I wrote
+// this, I hadn't implemented `iterator frequencies` in meow.core yet
+// (there are a few statistical functions and similar that are not there yet),
+// but it's quite straightforward anyway.
+//
+// For reference, this is the implementation of frequencies:
+//
+//    @spec (Self) -> dictionary<A, int> when Self is &iterator<A>
+//    def self frequencies =
+//      self
+//        | fold-from: #mutable-dictionary empty with: { Map, X in
+//            Map at: X update-with: _ + 1 or-default: 1
+//          }
+//        | freeze;
+// 
+// Dictionary doesn't support custom equality and meow.core doesn't have a
+// hash table implementation with custom hashing yet. This isn't a problem
+// here since we're just working with integer primitives and the primitive
+// equality operator (`=:=`) is equivalent to the custom integer equality
+// implementation (`int === int`).
+//
 implement solution {
   @spec (Self, #(array<int>, array<int>)) -> T when T is &iterable<int>;
   def self similarity-scores: Lists {
