@@ -119,3 +119,42 @@ implement solution {
     self part1: self input;
 }
 %endregion
+
+%region - Part 2 ---------------------------------------------------------------
+// Oh, look, it's a ~backtracking~ problem!
+//
+// I did a lot of overthinking for this one before deciding, you know what,
+// it's just 1000 lists and it can only backtrack 5 times, doing a
+// straightforward exhaustive search over all possibilities is fine, actually.
+//
+implement solution {
+  @spec (Self, array<int>) -> bool;
+  def self is-safe-relaxed: Column {
+    let Alternatives = Column iterator
+                         | enumerate
+                         | map: { Indexed in Column remove-at: Indexed.index }
+    in
+    [Column] iterator ++ Alternatives
+      | some: (self is-safe: _);
+  } test {
+    assert solution is-safe-relaxed: [7, 6, 4, 2, 1] ==> true;
+    assert solution is-safe-relaxed: [1, 2, 7, 8, 9] ==> false;
+    assert solution is-safe-relaxed: [9, 7, 6, 2, 1] ==> false;
+    assert solution is-safe-relaxed: [1, 3, 2, 4, 5] ==> true;
+    assert solution is-safe-relaxed: [8, 6, 4, 4, 1] ==> true;
+    assert solution is-safe-relaxed: [1, 3, 6, 7, 9] ==> true;
+  }
+
+  @spec (Self, text) -> int;
+  def self part2: Input {
+    self parse: Input
+      | take-if: (self is-safe-relaxed: _)
+      | compute-count;
+  } test {
+    assert solution part2: solution example ==> 4;
+  }
+
+  def self part2 =
+    self part2: self input;
+}
+%endregion

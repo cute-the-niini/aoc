@@ -6,5 +6,7 @@ def main(Args) {
   match Args {
     case ["1", "1"] => transcript write: day1.solution part1 as text;
     case ["1", "2"] => transcript write: day1.solution part2 as text;
+    case ["2", "1"] => transcript write: day2.solution part1 as text;
+    case ["2", "2"] => transcript write: day2.solution part2 as text;
   }
 }
