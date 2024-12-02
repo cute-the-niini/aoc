@@ -1,0 +1,121 @@
+% meow/1
+
+namespace day2;
+
+use meow.core/ exposing maybe, transcript;
+
+singleton solution;
+
+%region - Parsing --------------------------------------------------------------
+asset day2 = file "day2.txt";
+
+// We're still working with space-separated columns, so nothing too different
+// here parsing-wise.
+implement solution {
+  def self example =
+    """
+    7 6 4 2 1
+    1 2 7 8 9
+    9 7 6 2 1
+    1 3 2 4 5
+    8 6 4 4 1
+    1 3 6 7 9
+    """;
+
+  def self input =
+    force day2 | read-utf8;
+
+  @spec (Self, text) -> T when T is &iterable<array<int>>;
+  def self parse: Input::text {
+    lines(Input)
+      | map: words(_)
+      | map: { Columns in Columns map: { X in #int parse: X | unwrap! }
+                            | as array};
+  } test {
+    assert solution parse: solution example | as array
+      ==> [
+        [7, 6, 4, 2, 1],
+        [1, 2, 7, 8, 9],
+        [9, 7, 6, 2, 1],
+        [1, 3, 2, 4, 5],
+        [8, 6, 4, 4, 1],
+        [1, 3, 6, 7, 9],
+      ];
+  }
+}
+%endregion
+
+%region - Part 1 ---------------------------------------------------------------
+// Part 1 is just checking the distance between pairwise composition of the
+// columns. Meow didn't have an `iterator pairwise` or an `iterator windows: _`
+// method until now (and perhaps I'll finish writing all iterator methods that
+// are in my planned to-do list at this rate), so I added one.
+//
+// The implementation is straightforward:
+//
+//     struct pairwise-iter<A>(iter :: &iterable<A>,
+//                             buffer :: cell<pairwise-state<A>>);
+//
+//     union pairwise-state<A> {
+//       fresh;
+//       seen(value :: A);
+//       done;
+//     }
+//
+// So that the buffer keeps track of the last value seen. There's one small
+// complication here only due to the fact that `pairwise-iter` does no work
+// when you instantiate it, which is why it has a three-value state machine
+// rather than just computing the first value eagerly at instantiation and
+// keeping the buffer to a `maybe<A>`. This doesn't complicate the code too
+// much though.
+//
+// Because checking whether a column is safe or not involves checking both
+// properties of the pairwise item being currently examined and a global
+// property of the column, it's a bit less straightforward than the previous
+// day's puzzle. Here I'm relying on the fact that a pairwise view of an
+// iterator has N - 1 items, so if you compute the pairwise properties and
+// filter the ones that are unsafe, summing up the remaining columns should
+// give you the total number of possible pairs in the column.
+//
+// There might be more elegant ways of addressing this, but Meow doesn't
+// have a `for` loop construct currently so these kind of multi-state tracking
+// operations are not ideal to write right now...
+//
+implement solution {
+  @spec (Self, array<int>) -> bool;
+  def self is-safe: Column {
+    let Valid-pairs = Column
+                        | iterator
+                        | pairwise
+                        | map: { Pair in Pair first - Pair second }
+                        | take-if: { X in X absolute is-between: 1 and: 3 }
+                        | as array
+    in
+    let Sign = Valid-pairs first map: _ sign in
+    let Same-signs = Valid-pairs iterator
+                      | all: { X in Sign map: (_ =:= X sign)
+                                      | unwrap-or-default: false }
+    in
+    Same-signs and (Valid-pairs count === (Column count - 1));
+  } test {
+    assert solution is-safe: [7, 6, 4, 2, 1] ==> true;
+    assert solution is-safe: [1, 2, 7, 8, 9] ==> false;
+    assert solution is-safe: [9, 7, 6, 2, 1] ==> false;
+    assert solution is-safe: [8, 6, 4, 4, 1] ==> false;
+    assert solution is-safe: [1, 3, 6, 7, 9] ==> true;
+  }
+
+  @spec (Self, text) -> int;
+  def self part1: Input {
+    self parse: Input
+      | take-if: (self is-safe: _)
+      | compute-count
+  } test {
+    assert solution part1: solution example ==> 2;
+  }
+
+  @spec (Self) -> int;
+  def self part1 =
+    self part1: self input;
+}
+%endregion
