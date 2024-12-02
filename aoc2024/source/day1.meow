@@ -2,9 +2,6 @@
 
 namespace day1;
 
-use meow.core/ exposing transcript;
-use meow.text.regex exposing pattern;
-
 singleton solution;
 
 %region - Parsing --------------------------------------------------------------
