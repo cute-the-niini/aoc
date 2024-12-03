@@ -1,0 +1,198 @@
+% meow/1
+
+namespace day3;
+
+use meow.text.regex/ exposing pattern;
+use meow.core/ exposing maybe;
+
+asset input = file "day3.txt";
+
+singleton solution;
+
+implement solution {
+  def self example =
+    """
+    xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
+    """;
+
+  def self example2 =
+    """
+    xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
+    """;
+
+  def self input =
+    force input | read-utf8; 
+}
+
+%region - Part 1 ---------------------------------------------------------------
+// Ah, yes, a parsing problem ◉_◉
+//
+// Part 1 can be solved entirely with a regular language. Meow has a regex
+// library in the standard distribution, so let's use that one first. The
+// major difference you might see between common regex libraries and Meow's
+// is that we offer a "regex combinator" library for constructing patterns.
+//
+// The regex is just `mul\([0-9]{1,3},[0-9]{1,3}\)`, but hey!
+singleton part1-grammar;
+
+union expr {
+  mul(x :: int, y :: int);
+}
+
+implement part1-grammar {
+  def self lparen = #pattern exactly: "(";
+  def self rparen = #pattern exactly: ")";
+  def self comma = #pattern exactly: ",";
+
+  def self arg =
+    #pattern digit
+      | repeat-at-least: 1 at-most: 3;
+
+  def self mul =
+    #pattern exactly: "mul"
+      | then: self lparen
+      | then: (self arg capture: "x")
+      | then: self comma
+      | then: (self arg capture: "y")
+      | then: self rparen;
+}
+
+implement expr {
+  def self.mul eval = self.x * self.y;
+}
+
+implement solution {
+  def self part1-instructions: Text {
+    part1-grammar mul
+      | compile
+      | search-all: Text
+      | map: { M in new expr.mul(
+                            x = #int parse: (M at!: "x") | unwrap!,
+                            y = #int parse: (M at!: "y") | unwrap!
+                          ) };
+  } test {
+    assert solution part1-instructions: solution example
+            | as array
+      ==> [new expr.mul(2,4), new expr.mul(5,5), new expr.mul(11,8), new expr.mul(8, 5)]
+  }
+
+  def self part1: Text {
+    self part1-instructions: Text
+      | map: _ eval
+      | sum-of: #int;
+  } test {
+    assert solution part1: solution example
+      ==> 161;
+  }
+
+  def self part1 =
+    self part1: self input;
+}
+%endregion
+
+%region - Part 2 ---------------------------------------------------------------
+// I was expecting the gimmick introduced in part2 to be something like:
+// "now mul() expressions can be nested!" or "now you have nested control flow"
+// but it's still a linear machine with a regular language. Let's keep using
+// regexes in that case (instead of building a monadic parser combinator
+// just for this).
+//
+// Most of the definitions in part1 are reusable. The only thing that isn't
+// is `solution part1-instructions: _`, because now we need to reify a few
+// more things in the instruction stream.
+//
+// Meow lets you patch previous types' vtables by issuing multiple
+// `implement ...` instructions. We could just patch `part1-grammar` here
+// directly since we're only introducing new definitions. But to be a bit
+// fancier, let's inherit from part1-grammar and extend the new type's vtable
+// instead.
+//
+// Unions in Meow are not closed, they're just sugar for:
+//
+//     abstract expr;
+//     struct expr.mul(x :: int, y :: int) is expr;
+//
+// So we don't have to touch the previous union declaration to add new
+// variants to it here. This also doesn't affect optimisation since Meow
+// always uses whole-program (incremental) compilation. We'll add two new
+// instructions to the expr union here to track the enabling/disabling
+// of mul instructions.
+//
+singleton part2-grammar is part1-grammar;
+
+struct context(enabled :: cell<bool>);
+
+singleton expr.enable is expr;
+singleton expr.disable is expr;
+
+implement part2-grammar {
+  def self disable =
+    #pattern exactly: "don't()";
+  
+  def self enable =
+    #pattern exactly: "do()";
+
+  def self instruction =
+    self disable
+      or self enable
+      or self mul;
+}
+
+implement expr {
+  def self.enable eval: Ctx {
+    Ctx.enabled <- true;
+    0;
+  }
+
+  def self.disable eval: Ctx {
+    Ctx.enabled <- false;
+    0;
+  }
+
+  def self.mul eval: Ctx {
+    if {
+      case Ctx.enabled read => self eval;
+      else => 0;
+    }
+  }
+}
+
+implement solution {
+  def self part2-instructions: Text {
+    part2-grammar instruction
+      | compile
+      | search-all: Text
+      | map: { M in
+          match #(M matched-text, M at: "x", M at: "y") {
+            case #("do()", _, _) => expr.enable;
+            case #("don't()", _, _) => expr.disable;
+            case #(_, maybe.some(X), maybe.some(Y)) =>
+              new expr.mul(#int parse: X | unwrap!, #int parse: Y | unwrap!);
+          }
+        }
+  } test {
+    assert solution part2-instructions: solution example2 | as array
+      ==> [
+        new expr.mul(2, 4),
+        expr.disable,
+        new expr.mul(5, 5),
+        new expr.mul(11, 8),
+        expr.enable,
+        new expr.mul(8, 5),
+      ]
+  }
+
+  def self part2: Text {
+    let Ctx = new context(enabled = #cell of: true) in
+    self part2-instructions: Text
+      | map: (_ eval: Ctx)
+      | sum-of: #int;
+  } test {
+    assert solution part2: solution example2
+      ==> 48;
+  }
+
+  def self part2 =
+    self part2: self input;
+}
+%endregion
