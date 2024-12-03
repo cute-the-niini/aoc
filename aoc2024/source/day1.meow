@@ -5,7 +5,7 @@ namespace day1;
 singleton solution;
 
 %region - Parsing --------------------------------------------------------------
-asset day1 = file "day1.txt";
+asset input = file "day1.txt";
 
 // The input for this problem is quite neatly formatted as space-separated
 // columns. Meow doesn't have a built-in CSV (or TSV/etc) parser currently,
@@ -33,7 +33,7 @@ implement solution {
     """;
   
   def self input =
-    force day1 | read-utf8;
+    force input | read-utf8;
 
   @spec (Self, text) -> #(array<int>, array<int>);
   def self parse: Input::text {

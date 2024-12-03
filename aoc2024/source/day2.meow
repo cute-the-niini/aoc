@@ -7,7 +7,7 @@ use meow.core/ exposing maybe, transcript;
 singleton solution;
 
 %region - Parsing --------------------------------------------------------------
-asset day2 = file "day2.txt";
+asset input = file "day2.txt";
 
 // We're still working with space-separated columns, so nothing too different
 // here parsing-wise.
@@ -23,7 +23,7 @@ implement solution {
     """;
 
   def self input =
-    force day2 | read-utf8;
+    force input | read-utf8;
 
   @spec (Self, text) -> T when T is &iterable<array<int>>;
   def self parse: Input::text {
