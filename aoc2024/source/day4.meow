@@ -121,3 +121,91 @@ implement solution {
     self part1: self input;
 }
 %endregion
+
+%region - Part 2 ---------------------------------------------------------------
+// Part 2 feels a bit scary until you notice that, because the words have to
+// be aligned into a cross (and thus they must overlap in the middle), you 
+// only really need to care about the `A` letter, and you don't have to keep
+// track of any additional state about the words you've already seen ---
+// the `A` can never overlap with multiple crosses!
+// 
+// So this ends up being quite more straightforward than the search in the
+// first part, because we can more easily get rid of a large portion of the
+// search space. Each `A` letter requires us to look at 4 additional letters
+// in order to make a decision on whether to include it or not. This is
+// one case where Meow's additional pattern matching construct ends up
+// providing a quite elegant solution.
+//
+// I also just realised that I haven't been marking any of these functions
+// as not performing effects. This is actually a big deal for Meow's
+// performance because the bootstrapping compiler does not do effect analysis
+// and it compiles non-pure-marked functions very conservatively, by bouncing
+// all function calls back to the VM's effect dispatch loop, adding significant
+// overhead.
+//
+struct ctx(matrix :: array<array<int>>);
+
+implement ctx {
+  pure def #self from: Matrix =
+    new ctx(matrix = Matrix);
+
+  pure def self at-x: X y: Y =
+    self.matrix at: Y | and-then: (_ at: X);
+
+  pure def self at-x!: X y: Y =
+    self.matrix at!: Y | at!: X;
+
+  pure def self rows =
+    self.matrix count;
+
+  pure def self columns =
+    self.matrix first! count;
+}
+
+implement solution {
+  pure def self search-cross: Matrix {
+    let Ctx = #ctx from: Matrix in
+    let Count = #cell of: 0 in
+    let Columns = Ctx columns in
+    for Y in 0 until: Ctx rows, X in 0 until: Columns {
+      match Ctx at-x!: X y: Y {
+        case "A" if self search-cross: #(X, Y) ctx: Ctx {
+          Count <- Count read + 1;
+        }
+
+        else => nothing;
+      }
+    }
+    Count read;
+  }
+
+  pure def self search-cross: Pos ctx: Ctx {
+    let #(X, Y) = Pos in
+    if {
+      case (X < 1) or (X > (Ctx columns - 2)) or (Y < 1) or (Y > (Ctx rows - 2)) => false;
+      else {
+        let LU = Ctx at-x!: X - 1 y: Y - 1 in
+        let RU = Ctx at-x!: X + 1 y: Y - 1 in
+        let LD = Ctx at-x!: X - 1 y: Y + 1 in
+        let RD = Ctx at-x!: X + 1 y: Y + 1 in
+        match #(LU, RU, LD, RD) {
+          case #("M", "M", "S", "S") => true;
+          case #("M", "S", "M", "S") => true;
+          case #("S", "M", "S", "M") => true;
+          case #("S", "S", "M", "M") => true;
+          else => false;
+        }
+      }
+    }
+  }
+
+  pure def self part2: Input {
+    self search-cross: (self matrix: Input);
+  } test {
+    assert solution part2: solution example ==> 9;
+  }
+
+  pure def self part2 =
+    self part2: self input;
+}
+%endregion
