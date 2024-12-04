@@ -36,3 +36,14 @@ test "words" {
   assert words("   ") as array ==> [];
   assert words("") as array ==> [];
 }
+
+/// Yield each character as a separate element
+def characters(Text) {
+  Text unicode-scalars iterator
+    | map: { X in #text from-unicode-scalars: [X] };
+}
+
+test "characters" {
+  assert characters("") as array ==> [];
+  assert characters("abc") as array ==> ["a", "b", "c"];
+}

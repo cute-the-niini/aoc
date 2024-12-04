@@ -1,0 +1,123 @@
+% meow/1
+
+namespace day4;
+
+use meow.core/ exposing maybe, integer-range, transcript;
+
+%region - Parsing --------------------------------------------------------------
+asset input = file "day4.txt";
+
+singleton solution;
+
+implement solution {
+  def self example =
+  //0123456789  
+    """
+    MMMSXXMASM
+    MSAMXMSMSA
+    AMXSXMAAMM
+    MSAMASMSMX
+    XMASAMXAMM
+    XXAMMXXAMA
+    SMSMSASXSS
+    SAXAMASAAA
+    MAMMMXMMMM
+    MXMXAXMASX
+    """;
+
+  def self input =
+    force input | read-utf8;
+
+  def self matrix: Input =
+    lines(Input)
+      | map: characters(_)
+      | map: _ as array
+      | as array;
+}
+%endregion
+
+%region - Part 1 ---------------------------------------------------------------
+// A word search puzzle, exactly the kind of thing Meow is very poorly suited
+// for, yay! :D
+//
+// I had not yet implemented a `for` looping construct in Meow at this point,
+// so there were two options here: either use a `repeat` loop and manually
+// track all variables, or use nested iterators manually. I actually wrote both,
+// got incredibly disgusted with them, and decided to go implement a proper
+// `for` looping construct. This works similarly to Scala's, so you can "nest"
+// iteration by specifying multiple iterables.
+// 
+// It roughly expands to:
+//
+//     #integer-range from: 0 to: Matrix count - 1 | iterator | each: { Y in
+//       #integer-range from: 0 to: Columns - 1 | iterator | each: { X in
+//         <body>
+//       }
+//     }
+//
+// But without the additional lambdas, so `break` and `continue` works as
+// expected.
+//
+// Anyway! This is an exhaustive search again. It has a relatively lower
+// bound and the search only follows paths that are productive, so it doesn't
+// take a whole day to run. But it's certainly not a pretty implementation.
+//
+implement solution {
+  def self search-word1: Matrix {
+    let Columns = Matrix first! count in
+    let Count = #cell of: 0 in
+    for Y in 0 until: Matrix count, X in 0 until: Columns {
+      Count <- Count read + (self find: ["X", "M", "A", "S"] start: #(X, Y) matrix: Matrix);
+    }
+    Count read;
+  }
+
+  def self find: Steps start: Pos matrix: Matrix {
+    let Find = self find: Steps start: Pos direction: _ matrix: Matrix in
+    Find(#(0, -1))                           //        |
+      + Find(#(-1, -1)) + Find(#(1, -1))     //      \   / 
+      + Find(#(-1, 0))  + Find(#(1, 0))      //    _       _
+      + Find(#(-1, 1))  + Find(#(1, 1))      //      /   \
+      + Find(#(0, 1))                        //        |
+  } test {
+    let Matrix = [
+      ["X", "M", "A", "S"],
+      ["M", "-", "-", "A"],
+      ["A", "-", "X", "M"],
+      ["S", "A", "M", "X"],
+      ["-", "-", "A", "-"],
+      ["-", "-", "S", "-"]
+    ] in
+    assert solution find: ["X", "M", "A", "S"] start: #(0, 0) matrix: Matrix ==> 2;
+    assert solution find: ["S", "A", "M", "X"] start: #(0, 3) matrix: Matrix ==> 2;
+    assert solution find: ["X", "M", "A", "S"] start: #(2, 2) matrix: Matrix ==> 1;
+  }
+
+  def self find: Steps0 start: Pos direction: Direction matrix: Matrix {
+    let #(StepX, StepY) = Direction in
+    repeat with X = Pos first, Y = Pos second, Steps = Steps0 {
+      match #(Steps, Matrix at: Y | and-then: (_ at: X)) {
+        case #([], _) =>
+          break with 1;
+
+        case #([L, ...Rest], maybe.some(Letter)) if Letter === L =>
+          continue with X = X + StepX,
+                        Y = Y + StepY,
+                        Steps = Rest;
+
+        else =>
+          break with 0;
+      }
+    }
+  }
+
+  def self part1: Input {
+    self search-word1: (self matrix: Input)
+  } test {
+    assert solution part1: solution example ==> 18;
+  }
+
+  def self part1 =
+    self part1: self input;
+}
+%endregion
