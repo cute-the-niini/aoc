@@ -12,7 +12,7 @@ asset input = file "day2.txt";
 // We're still working with space-separated columns, so nothing too different
 // here parsing-wise.
 implement solution {
-  def self example =
+  pure def self example =
     """
     7 6 4 2 1
     1 2 7 8 9
@@ -22,11 +22,11 @@ implement solution {
     1 3 6 7 9
     """;
 
-  def self input =
+  pure def self input =
     force input | read-utf8;
 
   @spec (Self, text) -> T when T is &iterable<array<int>>;
-  def self parse: Input::text {
+  pure def self parse: Input::text {
     lines(Input)
       | map: words(_)
       | map: { Columns in Columns map: { X in #int parse: X | unwrap! }
@@ -83,7 +83,7 @@ implement solution {
 //
 implement solution {
   @spec (Self, array<int>) -> bool;
-  def self is-safe: Column {
+  pure def self is-safe: Column {
     let Valid-pairs = Column
                         | iterator
                         | pairwise
@@ -106,7 +106,7 @@ implement solution {
   }
 
   @spec (Self, text) -> int;
-  def self part1: Input {
+  pure def self part1: Input {
     self parse: Input
       | take-if: (self is-safe: _)
       | compute-count
@@ -115,7 +115,7 @@ implement solution {
   }
 
   @spec (Self) -> int;
-  def self part1 =
+  pure def self part1 =
     self part1: self input;
 }
 %endregion
@@ -129,7 +129,7 @@ implement solution {
 //
 implement solution {
   @spec (Self, array<int>) -> bool;
-  def self is-safe-relaxed: Column {
+  pure def self is-safe-relaxed: Column {
     let Alternatives = Column iterator
                          | enumerate
                          | map: { Indexed in Column remove-at: Indexed.index }
@@ -146,7 +146,7 @@ implement solution {
   }
 
   @spec (Self, text) -> int;
-  def self part2: Input {
+  pure def self part2: Input {
     self parse: Input
       | take-if: (self is-safe-relaxed: _)
       | compute-count;
@@ -154,7 +154,7 @@ implement solution {
     assert solution part2: solution example ==> 4;
   }
 
-  def self part2 =
+  pure def self part2 =
     self part2: self input;
 }
 %endregion

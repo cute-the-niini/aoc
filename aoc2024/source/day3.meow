@@ -10,17 +10,17 @@ asset input = file "day3.txt";
 singleton solution;
 
 implement solution {
-  def self example =
+  pure def self example =
     """
     xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
     """;
 
-  def self example2 =
+  pure def self example2 =
     """
     xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
     """;
 
-  def self input =
+  pure def self input =
     force input | read-utf8; 
 }
 
@@ -40,15 +40,15 @@ union expr {
 }
 
 implement part1-grammar {
-  def self lparen = #pattern exactly: "(";
-  def self rparen = #pattern exactly: ")";
-  def self comma = #pattern exactly: ",";
+  pure def self lparen = #pattern exactly: "(";
+  pure def self rparen = #pattern exactly: ")";
+  pure def self comma = #pattern exactly: ",";
 
-  def self arg =
+  pure def self arg =
     #pattern digit
       | repeat-at-least: 1 at-most: 3;
 
-  def self mul =
+  pure def self mul =
     #pattern exactly: "mul"
       | then: self lparen
       | then: (self arg capture: "x")
@@ -58,11 +58,11 @@ implement part1-grammar {
 }
 
 implement expr {
-  def self.mul eval = self.x * self.y;
+  pure def self.mul eval = self.x * self.y;
 }
 
 implement solution {
-  def self part1-instructions: Text {
+  pure def self part1-instructions: Text {
     part1-grammar mul
       | compile
       | search-all: Text
@@ -76,7 +76,7 @@ implement solution {
       ==> [new expr.mul(2,4), new expr.mul(5,5), new expr.mul(11,8), new expr.mul(8, 5)]
   }
 
-  def self part1: Text {
+  pure def self part1: Text {
     self part1-instructions: Text
       | map: _ eval
       | sum-of: #int;
@@ -85,7 +85,7 @@ implement solution {
       ==> 161;
   }
 
-  def self part1 =
+  pure def self part1 =
     self part1: self input;
 }
 %endregion
@@ -126,30 +126,30 @@ singleton expr.enable is expr;
 singleton expr.disable is expr;
 
 implement part2-grammar {
-  def self disable =
+  pure def self disable =
     #pattern exactly: "don't()";
   
-  def self enable =
+  pure def self enable =
     #pattern exactly: "do()";
 
-  def self instruction =
+  pure def self instruction =
     self disable
       or self enable
       or self mul;
 }
 
 implement expr {
-  def self.enable eval: Ctx {
+  pure def self.enable eval: Ctx {
     Ctx.enabled <- true;
     0;
   }
 
-  def self.disable eval: Ctx {
+  pure def self.disable eval: Ctx {
     Ctx.enabled <- false;
     0;
   }
 
-  def self.mul eval: Ctx {
+  pure def self.mul eval: Ctx {
     if {
       case Ctx.enabled read => self eval;
       else => 0;
@@ -158,7 +158,7 @@ implement expr {
 }
 
 implement solution {
-  def self part2-instructions: Text {
+  pure def self part2-instructions: Text {
     part2-grammar instruction
       | compile
       | search-all: Text
@@ -182,7 +182,7 @@ implement solution {
       ]
   }
 
-  def self part2: Text {
+  pure def self part2: Text {
     let Ctx = new context(enabled = #cell of: true) in
     self part2-instructions: Text
       | map: (_ eval: Ctx)
@@ -192,7 +192,7 @@ implement solution {
       ==> 48;
   }
 
-  def self part2 =
+  pure def self part2 =
     self part2: self input;
 }
 %endregion

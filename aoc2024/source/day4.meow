@@ -10,7 +10,7 @@ asset input = file "day4.txt";
 singleton solution;
 
 implement solution {
-  def self example =
+  pure def self example =
   //0123456789  
     """
     MMMSXXMASM
@@ -25,10 +25,10 @@ implement solution {
     MXMXAXMASX
     """;
 
-  def self input =
+  pure def self input =
     force input | read-utf8;
 
-  def self matrix: Input =
+  pure def self matrix: Input =
     lines(Input)
       | map: characters(_)
       | map: _ as array
@@ -63,7 +63,7 @@ implement solution {
 // take a whole day to run. But it's certainly not a pretty implementation.
 //
 implement solution {
-  def self search-word1: Matrix {
+  pure def self search-word1: Matrix {
     let Columns = Matrix first! count in
     let Count = #cell of: 0 in
     for Y in 0 until: Matrix count, X in 0 until: Columns {
@@ -72,7 +72,7 @@ implement solution {
     Count read;
   }
 
-  def self find: Steps start: Pos matrix: Matrix {
+  pure def self find: Steps start: Pos matrix: Matrix {
     let Find = self find: Steps start: Pos direction: _ matrix: Matrix in
     Find(#(0, -1))                           //        |
       + Find(#(-1, -1)) + Find(#(1, -1))     //      \   / 
@@ -93,7 +93,7 @@ implement solution {
     assert solution find: ["X", "M", "A", "S"] start: #(2, 2) matrix: Matrix ==> 1;
   }
 
-  def self find: Steps0 start: Pos direction: Direction matrix: Matrix {
+  pure def self find: Steps0 start: Pos direction: Direction matrix: Matrix {
     let #(StepX, StepY) = Direction in
     repeat with X = Pos first, Y = Pos second, Steps = Steps0 {
       match #(Steps, Matrix at: Y | and-then: (_ at: X)) {
@@ -111,13 +111,13 @@ implement solution {
     }
   }
 
-  def self part1: Input {
+  pure def self part1: Input {
     self search-word1: (self matrix: Input)
   } test {
     assert solution part1: solution example ==> 18;
   }
 
-  def self part1 =
+  pure def self part1 =
     self part1: self input;
 }
 %endregion

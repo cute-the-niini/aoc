@@ -22,7 +22,7 @@ asset input = file "day1.txt";
 // a problem in this puzzle.
 //
 implement solution {
-  def self example =
+  pure def self example =
     """
     3   4
     4   3
@@ -32,11 +32,11 @@ implement solution {
     3   3
     """;
   
-  def self input =
+  pure def self input =
     force input | read-utf8;
 
   @spec (Self, text) -> #(array<int>, array<int>);
-  def self parse: Input::text {
+  pure def self parse: Input::text {
     lines(Input)
       | map: words(_)
       | map: { Pair in 
@@ -71,7 +71,7 @@ implement solution {
 //
 implement solution {
   @spec (Self, #(array<int>, array<int>)) -> T when T is &iterable<int>;
-  def self pairwise-distances: Lists {
+  pure def self pairwise-distances: Lists {
     let #(L, R) = Lists in
     L sort iterator zip: R sort with: { A, B in (A - B) absolute };
   } test {
@@ -80,7 +80,7 @@ implement solution {
   }
 
   @spec (Self, text) -> int;
-  def self part1: Input {
+  pure def self part1: Input {
     self parse: Input
       |> self pairwise-distances: _
       |> _ iterator
@@ -90,7 +90,7 @@ implement solution {
   }
 
   @spec (Self) -> int;
-  def self part1 =
+  pure def self part1 =
     self part1: self input;
 }
 %endregion
@@ -120,7 +120,7 @@ implement solution {
 //
 implement solution {
   @spec (Self, #(array<int>, array<int>)) -> T when T is &iterable<int>;
-  def self similarity-scores: Lists {
+  pure def self similarity-scores: Lists {
     let #(L, R) = Lists in
     let Frequencies = R iterator frequencies in
     L iterator
@@ -131,7 +131,7 @@ implement solution {
   }
 
   @spec (Self, text) -> int;
-  def self part2: Input {
+  pure def self part2: Input {
     self parse: Input
       |> self similarity-scores: _
       |> _ sum-of: #int;
@@ -140,7 +140,7 @@ implement solution {
   }
 
   @spec (Self) -> int;
-  def self part2 =
+  pure def self part2 =
     self part2: self input;
 }
 %endregion
